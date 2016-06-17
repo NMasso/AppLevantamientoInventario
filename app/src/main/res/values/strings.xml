@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">AppLevantamientoInventario</string>
+
+    <string name="formulariosActivityName">Formularios</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_dinamic_form">DinamicForm</string>
+
+    <string name="hello_world">Hello world!</string>
+</resources>
