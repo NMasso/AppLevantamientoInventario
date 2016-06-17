@@ -12,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -22,16 +23,25 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class DinamicForm extends Activity {
 
-
+    HashMap formData;
+    LinearLayout mlinearLayout;
+    LinearLayout.LayoutParams mRparams;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dinamic_form);
+
+        mlinearLayout = (LinearLayout) findViewById(R.id.mlinearLayout);
+
+        mRparams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+
+        formData = new HashMap();
 
         JSONObject formConfig = null;
         try {
@@ -66,7 +76,6 @@ public class DinamicForm extends Activity {
     }
 
     private void createForm(JSONObject formConfig){
-        final LinearLayout mlinearLayout = (LinearLayout) findViewById(R.id.mlinearLayout);
 
         TextView textView;
         View fieldView;
@@ -86,13 +95,13 @@ public class DinamicForm extends Activity {
                 if(field.getBoolean("Domain")){
                     JSONArray domains = field.getJSONArray("Domains");
 
-                    fieldView = createField(null, fieldName, true, domains);
+                    fieldView = createField(null, fieldName, true, domains, i);
 
                     mlinearLayout.addView(textView);
                     mlinearLayout.addView(fieldView);
 
                 } else {
-                    fieldView = createField(field.getString("FieldType"), fieldName, false, null);
+                    fieldView = createField(field.getString("FieldType"), fieldName, false, null, i);
 
                     mlinearLayout.addView(textView);
                     mlinearLayout.addView(fieldView);
@@ -101,6 +110,18 @@ public class DinamicForm extends Activity {
 
             }
 
+            Button sendButton = new Button(DinamicForm.this);
+            sendButton.setText("Enviar");
+            sendButton.setLayoutParams(mRparams);
+            sendButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    readDinamicForm();
+                }
+            });
+
+            mlinearLayout.addView(sendButton);
+
         } catch (JSONException e) {
             e.printStackTrace();
             showAlert();
@@ -108,8 +129,8 @@ public class DinamicForm extends Activity {
 
     }
 
-    private View createField(String fieldType, String fielName, Boolean hasDomains, JSONArray domains){
-        LinearLayout.LayoutParams mRparams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+    private View createField(String fieldType, String fielName, Boolean hasDomains, JSONArray domains, int id){
+
 
         View view;
         Spinner spinner;
@@ -117,7 +138,7 @@ public class DinamicForm extends Activity {
 
         if(hasDomains){
             spinner = new Spinner(this);
-            //spinner.setId(i);
+            spinner.setId(id);
             spinner.setTag(fielName);
             spinner.setLayoutParams(mRparams);
 
@@ -127,23 +148,23 @@ public class DinamicForm extends Activity {
             spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
             spinner.setAdapter(spinnerArrayAdapter);
-            spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            /*spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                     CodeValue cv = (CodeValue) parent.getItemAtPosition(position);
-                    cv.getCode();
+                    formData.put(parent.getTag().toString(), cv.getCode());
                 }
 
                 @Override
                 public void onNothingSelected(AdapterView<?> parent) {
 
                 }
-            });
+            });*/
 
             view = spinner;
         } else {
             edit = new EditText(this);
-
+            edit.setId(id);
             edit.setTag(fielName);
             edit.setLayoutParams(mRparams);
 
@@ -181,6 +202,20 @@ public class DinamicForm extends Activity {
 
         return codeValueList;
 
+    }
+
+    private void readDinamicForm(){
+
+        for (int i = 0; i < mlinearLayout.getChildCount(); i++){
+            final View view = findViewById(mlinearLayout.getChildAt(i).getId());
+            if(view instanceof EditText){
+                EditText editText = ((EditText) view);
+                formData.put(editText.getTag().toString(), editText.getText().toString());
+            } else if(view instanceof Spinner){
+                CodeValue cv = (CodeValue) ((Spinner) view).getSelectedItem();
+                formData.put(view.getTag().toString(), cv.getCode());
+            }
+        }
     }
 
     private AlertDialog.Builder showAlert(){
