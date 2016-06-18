@@ -3,12 +3,15 @@ package com.androidsample.applevantamientoinventario;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,11 +36,11 @@ public class FormulariosList extends Activity implements AsynResponse {
 
         formulariosList = (ListView) findViewById(android.R.id.list);
 
-        HttpClient httpClient = new HttpClient(this, "Cargando");
+        HttpClient httpClient = new HttpClient(this, "http://192.168.0.6:81/practica/home/", "GetConfig", "get");
 
         httpClient.delegate = this;
 
-        httpClient.execute("GetConfig", "GET");
+        httpClient.execute();
     }
 
     @Override
@@ -69,7 +72,6 @@ public class FormulariosList extends Activity implements AsynResponse {
             JSONObject jsonObject = new JSONObject(output);
             formularios = jsonObject.getJSONArray("Result");
 
-            String[] lvArray;
             ArrayList forms = new ArrayList();
 
             for (int i = 0; i < formularios.length(); i++){
@@ -93,6 +95,9 @@ public class FormulariosList extends Activity implements AsynResponse {
 
         } catch (JSONException e) {
             e.printStackTrace();
+            Toast toast = Toast.makeText(FormulariosList.this, output, Toast.LENGTH_LONG);
+            toast.setGravity(Gravity.CENTER, 0, 0);
+            toast.show();
         }
     }
 

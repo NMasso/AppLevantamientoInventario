@@ -21,22 +21,28 @@ public class HttpClient extends AsyncTask<String, Void, String > {
 
     private final Context context;
     private ProgressDialog progressDialog;
-    private String progressDialogMessage;
+    private String progressDialogMessage = "Cargando";
     private String clientUrl;
+    private String actionService;
+    private String method;
     private HashMap<String, Object> hashMap = null;
     private String jsonString = null;
     public AsynResponse delegate = null;
     private String response;
 
-    public HttpClient(Context context, String progressDialogMessage) {
+    public HttpClient(Context context, String clientUrl, String actionService, String method) {
         this.context = context;
-        this.progressDialogMessage = progressDialogMessage;
-        //this.clientUrl = "http://localhost:11406/api/AndroidService/";
-        this.clientUrl = "http://192.168.0.6:81/practica/home/";
+        this.clientUrl = clientUrl;
+        this.actionService = actionService;
+        this.method = method;
     }
 
     public void setGetData(HashMap<String, Object> hashMap){
         this.hashMap = hashMap;
+    }
+
+    public void setProgressDialogMessage(String progressDialogMessage) {
+        this.progressDialogMessage = progressDialogMessage;
     }
 
     public void setJsonString(String jsonString){
@@ -48,14 +54,10 @@ public class HttpClient extends AsyncTask<String, Void, String > {
         URL url;
         HttpURLConnection urlConnection;
 
-        //Se obtiene el nombre del servicio al que se va dirigir y el tipo de metodo
-        String action = params[0];
-        String method = params[1];
-
         //Se concatena la url y el nombre del servicio
-        String stringUrl = clientUrl + action;
+        String stringUrl = clientUrl + actionService;
 
-        if(method.equals("POST")){
+        if(method.equalsIgnoreCase("POST")){
 
             try {
 
@@ -63,6 +65,7 @@ public class HttpClient extends AsyncTask<String, Void, String > {
                 url = new URL(stringUrl);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestMethod("POST");
+                urlConnection.setConnectTimeout(6000);
                 urlConnection.setDoInput(true);
                 urlConnection.setDoOutput(true);
                 urlConnection.setRequestProperty("Content-Type", "application/json");
@@ -89,25 +92,26 @@ public class HttpClient extends AsyncTask<String, Void, String > {
 
                     response = bufferedReader.readLine();
                 } else{
-                    response = "Ocurrio un error al enviar los datos al servidor";
+                    response = "No se ha podido establecer la conexion al servicio";
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                response = "Ha ocurrido un error";
+                response = "No se ha podido establecer la conexion al servidor";
             }
 
         } else{
 
             try {
                 if(hashMap!=null){
-                    stringUrl = clientUrl+action+"?"+getGetData();
+                    stringUrl = clientUrl+actionService+"?"+getGetData();
                 }else{
-                    stringUrl = clientUrl+action;
+                    stringUrl = clientUrl+actionService;
                 }
 
                 url = new URL(stringUrl);
                 urlConnection = (HttpURLConnection) url.openConnection();
                 urlConnection.setRequestProperty("Content-type", "aplication/json");
+                urlConnection.setConnectTimeout(6000);
 
                 int responseCode = urlConnection.getResponseCode();
 
@@ -120,11 +124,11 @@ public class HttpClient extends AsyncTask<String, Void, String > {
 
                     response = bufferedReader.readLine();
                 } else{
-                    response = "Ocurrio un error al enviar los datos al servidor";
+                    response = "No se ha podido establecer la conexion al servicio";
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                response = "Ha ocurrido un error";
+                response = "No se ha podido establecer la conexion al servidor";
             }
 
         }

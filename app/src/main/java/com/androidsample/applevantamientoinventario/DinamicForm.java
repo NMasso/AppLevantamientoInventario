@@ -2,6 +2,7 @@ package com.androidsample.applevantamientoinventario;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Application;
 import android.content.DialogInterface;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -17,6 +18,10 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.androidsample.applevantamientoinventario.HttpClient.AsynResponse;
+import com.androidsample.applevantamientoinventario.HttpClient.HttpClient;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -26,7 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class DinamicForm extends Activity {
+public class DinamicForm extends Activity implements AsynResponse{
 
     HashMap formData;
     LinearLayout mlinearLayout;
@@ -116,7 +121,7 @@ public class DinamicForm extends Activity {
             sendButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    readDinamicForm();
+                    sendFormData(readDinamicForm());
                 }
             });
 
@@ -148,18 +153,6 @@ public class DinamicForm extends Activity {
             spinnerArrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
             spinner.setAdapter(spinnerArrayAdapter);
-            /*spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    CodeValue cv = (CodeValue) parent.getItemAtPosition(position);
-                    formData.put(parent.getTag().toString(), cv.getCode());
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {
-
-                }
-            });*/
 
             view = spinner;
         } else {
@@ -204,10 +197,14 @@ public class DinamicForm extends Activity {
 
     }
 
-    private void readDinamicForm(){
-
+    private HashMap readDinamicForm(){
+        View view;
         for (int i = 0; i < mlinearLayout.getChildCount(); i++){
-            final View view = findViewById(mlinearLayout.getChildAt(i).getId());
+            view = findViewById(mlinearLayout.getChildAt(i).getId());
+
+            if(view==null){
+                continue;
+            }
             if(view instanceof EditText){
                 EditText editText = ((EditText) view);
                 formData.put(editText.getTag().toString(), editText.getText().toString());
@@ -216,6 +213,24 @@ public class DinamicForm extends Activity {
                 formData.put(view.getTag().toString(), cv.getCode());
             }
         }
+
+        return formData;
+
+    }
+
+    private void sendFormData(HashMap formData){
+
+        JSONObject jsonFormData = new JSONObject(formData);
+
+        HttpClient httpClient = new HttpClient(DinamicForm.this, "http://localhost:11406/api/AndroidService/", "JsonServicio", "post");
+
+        httpClient.delegate = DinamicForm.this;
+
+        httpClient.setJsonString(jsonFormData.toString());
+        httpClient.setProgressDialogMessage("Enviando");
+
+        httpClient.execute();
+
     }
 
     private AlertDialog.Builder showAlert(){
@@ -231,5 +246,21 @@ public class DinamicForm extends Activity {
         });
 
         return builder;
+    }
+
+    @Override
+    public void processFinish(String output) {
+
+        try {
+            JSONObject response = new JSONObject(output);
+            if(response.getBoolean("Operation")){
+                finish();
+                Toast toast = Toast.makeText(getApplicationContext(), "Registro almacenado", Toast.LENGTH_LONG);
+                toast.show();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
     }
 }
